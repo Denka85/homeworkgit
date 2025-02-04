@@ -17,7 +17,7 @@ def get_mask_card_number(card_number: int) -> str:
     return masked_card
 
 
-def get_mask_account(account_number: str) -> str:
+def get_mask_account(account_number: int) -> str:
     """
     Возвращает маскированный номер счёта в формате: **XXXX.
 
