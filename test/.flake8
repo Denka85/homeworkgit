@@ -1,0 +1,3 @@
+[flake8]
+max-len-length = 119
+exclude = .git, __pycache__
