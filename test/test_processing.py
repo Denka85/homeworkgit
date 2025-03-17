@@ -1,59 +1,74 @@
+from datetime import datetime
+
 import pytest
 
-from src.processing import filter_by_state, sort_by_date
-
-# Пример данных для тестов
-data = [
-    {"date": "2024-01-01T12:00:00.000000", "state": "EXECUTED", "amount": 100},
-    {"date": "2024-01-05T12:00:00.000000", "state": "CANCELLED", "amount": 200},
-    {"date": "2024-01-03T12:00:00.000000", "state": "EXECUTED", "amount": 300},
-    {"date": "2024-01-02T12:00:00.000000", "state": "EXECUTED", "amount": 400},
-    {"date": "2024-01-05T12:00:00.000000", "state": "EXECUTED", "amount": 150},  # Одинаковая дата для тестирования
-]
+from processing import filter_by_state, sort_by_date
 
 
 @pytest.fixture
 def test_data():
-    return data
-
-
-@pytest.mark.parametrize("state, expected_length", [("EXECUTED", 4), ("CANCELLED", 1)])
-def test_filter_by_state(test_data, state, expected_length):
-    # Тестирование фильтрации по состоянию
-    filtered_transactions = filter_by_state(test_data, state)
-    assert len(filtered_transactions) == expected_length
-    assert all(item["state"] == state for item in filtered_transactions)
+    return [
+        {"id": 1, "state": "EXECUTED", "date": "2024-01-15"},
+        {"id": 2, "state": "PENDING", "date": "2024-01-14"},
+        {"id": 3, "state": "EXECUTED", "date": "2024-01-16"},
+        {"id": 4, "state": "CANCELED", "date": "2024-01-13"},
+        {"id": 5, "date": "2024-01-12"},  # Нет ключа 'state'
+        {"id": 6, "state": "EXECUTED", "date": "invalid_date"},  # Неправильный формат
+        {"id": 7, "state": "EXECUTED", "date": "2024-01-17"},  # Корректная дата
+    ]
 
 
 @pytest.mark.parametrize(
-    "reverse_order, expected_dates",
+    "state, expected_ids",
     [
-        (
-            True,
-            [
-                "2024-01-05T12:00:00.000000",  # Последняя по дате
-                "2024-01-05T12:00:00.000000",  # Одинаковая дата
-                "2024-01-03T12:00:00.000000",
-                "2024-01-02T12:00:00.000000",
-                "2024-01-01T12:00:00.000000",  # Первая по дате
-            ],
-        ),
-        (
-            False,
-            [
-                "2024-01-01T12:00:00.000000",
-                "2024-01-02T12:00:00.000000",
-                "2024-01-03T12:00:00.000000",
-                "2024-01-05T12:00:00.000000",  # Одинаковая дата
-                "2024-01-05T12:00:00.000000",  # Последняя по дате
-            ],
-        ),
+        ("EXECUTED", [1, 3, 7]),  # Стандартный случай
+        ("PENDING", [2]),  # Один элемент
+        ("CANCELED", [4]),  # Другой статус
+        ("UNKNOWN", []),  # Нет совпадений
     ],
 )
-def test_sort_by_date(test_data, reverse_order, expected_dates):
-    # Тестирование сортировки по дате
-    sorted_data = sort_by_date(test_data, reverse_order)
-    sorted_dates = [item["date"] for item in sorted_data]
-    assert sorted_dates == expected_dates
+def test_filter_by_state(test_data, state, expected_ids):
+    result = filter_by_state(test_data, state)
+    assert [item["id"] for item in result] == expected_ids
 
 
+def test_filter_by_state_missing_key(test_data):
+    # Элементы без ключа 'state' игнорируются
+    result = filter_by_state(test_data, "EXECUTED")
+    assert 5 not in [item["id"] for item in result]
+
+
+@pytest.mark.parametrize(
+    "reverse, expected_order",
+    [
+        (False, [5, 4, 2, 1, 3, 7]),  # По возрастанию (самая ранняя дата первая)
+        (True, [7, 3, 1, 2, 4, 5]),  # По убыванию (самая поздняя дата первая)
+    ],
+)
+def test_sort_by_date_valid(test_data, reverse, expected_order):
+    # Исключаем элемент с некорректной датой (id=6)
+    valid_data = [item for item in test_data if item["id"] != 6]
+    result = sort_by_date(valid_data, reverse=reverse)
+    assert [item["id"] for item in result] == expected_order
+
+
+def test_sort_by_date_invalid_format(test_data):
+    # Проверка обработки невалидных дат
+    with pytest.raises(ValueError):
+        sort_by_date([test_data[5]])  # Элемент с date="invalid_date"
+
+
+def test_sort_by_date_missing_key(test_data):
+    # Элементы без ключа 'date' вызывают ошибку
+    with pytest.raises(KeyError):
+        sort_by_date([{"id": 8, "state": "EXECUTED"}])
+
+
+def test_sort_by_date_stable_sorting():
+    data = [
+        {"id": 1, "date": "2024-01-15"},
+        {"id": 2, "date": "2024-01-15"},
+    ]
+    result = sort_by_date(data)
+    # Порядок элементов с одинаковой датой сохраняется
+    assert [item["id"] for item in result] == [1, 2]
