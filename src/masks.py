@@ -10,7 +10,7 @@ def get_mask_card_number(card_number: int) -> str:
     :return: Маскированный номер карты в виде строки.
     """
     card_str = str(card_number)
-    if len(card_str) != 16 :
+    if len(card_str) != 16:
         print("Номер карты должен содержать ровно 16 цифр.")
 
     masked_card = f"{card_str[:4]} {card_str[4:6]}** **** {card_str[-4:]}"
