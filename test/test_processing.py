@@ -55,5 +55,3 @@ def test_sort_by_date(test_data, reverse_order, expected_dates):
     sorted_data = sort_by_date(test_data, reverse_order)
     sorted_dates = [item["date"] for item in sorted_data]
     assert sorted_dates == expected_dates
-
-
