@@ -1,22 +1,36 @@
+from datetime import datetime
+
+
 def mask_account_card(info: str) -> str:
     """Функция принимает информацию о карте и маскирует номер"""
-    # Объединяем инфо о карте в список
-    parts = info.split()
-    # Создаем строку без номера используя срез
-    card_type = " ".join(parts[:-1])
-    # Создаем номер
-    number = parts[-1]
+    if not info:
+        return info
 
-    if "Счет" in card_type:
-        masked_number = f"{card_type} **{number[-4:]}"
-
+    # Проверяем, является ли строка номером карты (16 цифр) или счетом (20 цифр)
+    if info.isdigit() and len(info) == 16:
+        # Маскируем номер карты
+        return f"{info[:4]} {info[4:6]}** **** {info[-4:]}"
+    elif info.isdigit() and len(info) == 20:
+        # Маскируем номер счета
+        return f"**{info[-4:]}"
     else:
-        masked_number = f"{card_type} {number[:4]} {number[4:6]}** **** {number[-4:]}"
+        # Возвращаем исходную строку для некорректных данных
+        return info
 
-    return masked_number
 
-
-def get_date(date: str) -> str:
-    """Функция, которая возвращает дату в формате 'ДД.ММ.ГГГГ'"""
-    new_date = date[0:10].split("-")
-    return ".".join(new_date[::-1])
+def get_date(input_date: str) -> str:
+    """
+    Преобразует строку с датой в формате ISO (YYYY-MM-DDTHH:MM:SS)
+    в строку с датой в формате DD.MM.YYYY
+    """
+    try:
+        # Пробуем разобрать полный ISO-формат с временем
+        date_obj = datetime.fromisoformat(input_date)
+        return date_obj.strftime("%d.%m.%Y")
+    except ValueError:
+        try:
+            # Если не получилось, пробуем разобрать только дату (YYYY-MM-DD)
+            date_obj = datetime.strptime(input_date, "%Y-%m-%d")
+            return date_obj.strftime("%d.%m.%Y")
+        except ValueError:
+            raise ValueError("Некорректный формат даты. Ожидается YYYY-MM-DD или ISO-формат")
