@@ -47,3 +47,4 @@ class TestCardNumberGenerator:
     def test_formats_correctly(self):
         num = next(card_number_generator(1234567890123456, 1234567890123457))
         assert num == '1234 5678 9012 3456'
+

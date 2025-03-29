@@ -1,6 +1,7 @@
 from src.generators import card_number_generator, filter_by_currency, transaction_descriptions
 from src.masks import get_mask_account, get_mask_card_number
 from src.widget import get_date, mask_account_card
+from src.decorators import log
 
 if __name__ == "__main__":
     card_num = 7000792289606361
@@ -69,3 +70,16 @@ for desc in transaction_descriptions(transactions):
 
 for card_number in card_number_generator(1, 5):
     print(card_number)
+
+@log()
+def add(a, b):
+    return a + b
+
+add(2, 3)  # Выведет в консоль: "2025-03-27 12:34:56 - add(2, 3) -> 5"
+
+@log("operations.log")
+def divide(a, b):
+    return a / b
+
+divide(10, 2)  # Запишет в файл "operations.log": "2025-03-27 12:34:56 - divide(10, 2) -> 5.0"
+divide(10, 0)  # Запишет в файл "operations.log" сообщение об ошибке и выбросит исключение
