@@ -11,9 +11,9 @@ def divide_with_error(x, y):
     return x / y
 
 def test_divide():
-    assert divide(10, 2) == 5
+    assert divide(10, 2) == 5  # Проверка возврата результата
     with pytest.raises(ZeroDivisionError):
-        divide(10, 0)
+        divide(10, 0)  # Проверка логирования ошибки
 
 def test_divide_with_error():
     with pytest.raises(ZeroDivisionError):
