@@ -25,7 +25,7 @@ def log(filename=None):
 
     Пример использования:
     ---------------------
-    >>> @log("operations.log")
+    >>> @log("../logs/operations.log")
     ... def add(a, b):
     ...     return a + b
     """

@@ -1,9 +1,14 @@
-from unittest.mock import patch
-from src.external_api import convert_to_rub
+from unittest.mock import mock_open, patch
 
-@patch('requests.get')
-def test_convert_usd(mock_get):
-    mock_response = mock_get.return_value
-    mock_response.json.return_value = {'rates': {'RUB': 75.5}}
-    transaction = {'amount': 100, 'currency': 'USD'}
-    assert convert_to_rub(transaction) == 7550.0
+import pytest
+
+from src.utils import load_transactions
+
+
+@patch("builtins.open", mock_open(read_data='[{"id": 1}]'))
+def test_load_transactions_success():
+    assert load_transactions("dummy.json") == [{"id": 1}]
+
+def test_load_transactions_empty_file():
+    with patch("builtins.open", mock_open(read_data='')):
+        assert load_transactions("empty.json") == []
