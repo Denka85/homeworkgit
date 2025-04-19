@@ -2,7 +2,6 @@ from src.decorators import log
 from src.generators import card_number_generator, filter_by_currency, transaction_descriptions
 from src.masks import get_mask_account, get_mask_card_number
 from src.widget import get_date, mask_account_card
-from src.utils import load_transactions
 from src.external_api import convert_to_rub
 
 
@@ -87,8 +86,10 @@ def divide(a, b):
 divide(10, 2)  # Запишет в файл "operations.log": "2025-03-27 12:34:56 - divide(10, 2) -> 5.0"
 divide(10, 0)  # Запишет в файл "operations.log" сообщение об ошибке и выбросит исключение
 
-transactions = load_transactions("data/operations.json")
-for tx in transactions:
-    print(convert_to_rub(tx))
+os.environ[.env.temlate "EXCHANGE_API_KEY"] = ""
+
+print(convert_to_rub(100, "USD"))  # Конвертация 100 USD в RUB
+print(convert_to_rub(50, "EUR"))   # Конвертация 50 EUR в RUB
+print(convert_to_rub(1000, "RUB")) # Без конвертации
 
 

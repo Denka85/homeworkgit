@@ -1,7 +1,10 @@
+import os
 import pytest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+import requests
 from src.external_api import convert_to_rub
 
+os.environ["EXCHANGE_API_KEY"] = "xAPR6VuBpicDFRYDqGGxDrvgKVdL93ya"
 
 def test_convert_rub():
     """Тест для RUB (без конвертации)"""
@@ -45,3 +48,14 @@ def test_unsupported_currency():
     transaction = {'amount': 100.0, 'currency': 'GBP'}
     with pytest.raises(ValueError, match="Unsupported currency: GBP"):
         convert_to_rub(transaction)
+
+def test_convert_missing_amount():
+    with pytest.raises(ValueError):
+        convert_to_rub({'currency': 'USD'})
+
+@patch('requests.get')
+def test_api_timeout(mock_get):
+    mock_get.side_effect = requests.exceptions.Timeout()
+    with pytest.raises(ValueError):
+        convert_to_rub({'amount': 100, 'currency': 'USD'})
+

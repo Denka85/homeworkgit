@@ -1,14 +1,20 @@
 import os
 import requests
+from typing import Dict, Any
 from dotenv import load_dotenv
 
 load_dotenv()
 
+API_BASE_URL = "https://api.apilayer.com/exchangerates_data"
 
-def convert_to_rub(transaction: dict) -> float:
-    """Конвертирует сумму транзакции в рубли"""
-    currency = transaction['currency'].upper()
-    amount = transaction['amount']
+
+def convert_to_rub(transaction: Dict[str, Any]) -> float:
+    """Convert transaction amount to RUB using current exchange rates."""
+    currency = transaction.get('currency', 'RUB').upper()
+    try:
+        amount = float(transaction['amount'])
+    except (KeyError, ValueError):
+        raise ValueError("Invalid transaction amount")
 
     if currency == 'RUB':
         return amount
@@ -16,11 +22,18 @@ def convert_to_rub(transaction: dict) -> float:
     if currency not in ('USD', 'EUR'):
         raise ValueError(f"Unsupported currency: {currency}")
 
-    # Получаем курс от API
-    response = requests.get(
-        f"https://api.apilayer.com/exchangerates_data/latest?base={currency}",
-        headers={"apikey": os.getenv("API_KEY")}
-    )
-    response.raise_for_status()
+    api_key = os.getenv("EXCHANGE_API_KEY")
+    if not api_key:
+        raise ValueError("API key not configured")
 
-    return amount * response.json()['rates']['RUB']
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/latest?base={currency}",
+            headers={"apikey": api_key},
+            timeout=10
+        )
+        response.raise_for_status()
+        rate = response.json()['rates']['RUB']
+        return round(amount * rate, 2)
+    except requests.exceptions.RequestException as e:
+        raise ValueError(f"API request failed: {str(e)}")

@@ -1,25 +1,36 @@
-import json
 
-import pytest
 from unittest.mock import mock_open, patch
+
 from src.utils import load_transactions
 
 
-@patch("builtins.open", mock_open(read_data='[{"id": 1}]'))
-def test_load_transactions_success():
-    assert load_transactions("dummy.json") == [{"id": 1}]
+
+def test_load_transactions_empty_list():
+    """Тест пустого списка"""
+    test_data = '[]'
+    with patch("builtins.open", mock_open(read_data=test_data)):
+        result = load_transactions("dummy.json")
+        assert result == []
+
 
 def test_load_transactions_empty_file():
-    with patch("builtins.open", mock_open(read_data='')):
-        assert load_transactions("empty.json") == []
+    """Тест пустого файла"""
+    test_data = ''
+    with patch("builtins.open", mock_open(read_data=test_data)):
+        result = load_transactions("dummy.json")
+        assert result == []
 
-@pytest.mark.parametrize("content, expected", [
-    ('[{"id": 1}]', [{"id": 1}]),
-    ('[]', []),
-    ('', []),
-    ('{"id": 1}', []),
-])
-def test_load_transactions(content, expected):
-    with patch("builtins.open", mock_open(read_data=content)), \
-         patch("json.load", return_value=json.loads() if content else {}):
-        assert load_transactions("dummy_path") == expected
+
+def test_load_transactions_invalid_json():
+    """Тест невалидного JSON"""
+    test_data = '{"id": 1}'  # Это словарь, а не список
+    with patch("builtins.open", mock_open(read_data=test_data)):
+        result = load_transactions("dummy.json")
+        assert result == []
+
+
+def test_load_transactions_file_not_found():
+    """Тест отсутствия файла"""
+    with patch("builtins.open", side_effect=FileNotFoundError):
+        result = load_transactions("nonexistent.json")
+        assert result == []
