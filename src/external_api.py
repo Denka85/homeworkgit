@@ -10,9 +10,9 @@ API_BASE_URL = "https://api.apilayer.com/exchangerates_data"
 
 def convert_to_rub(transaction: Dict[str, Any]) -> float:
     """Convert transaction amount to RUB using current exchange rates."""
-    currency = transaction.get('currency', 'RUB').upper()
+    currency = transaction.get('operationAmount', {}).get('currency', {}).get('code', 'RUB').upper()
     try:
-        amount = float(transaction['amount'])
+        amount = float(transaction['operationAmount']['amount'])
     except (KeyError, ValueError):
         raise ValueError("Invalid transaction amount")
 
