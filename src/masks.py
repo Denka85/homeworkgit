@@ -2,6 +2,35 @@ import logging
 from pathlib import Path
 
 
+# Получаем путь к директории текущего файла
+current_dir = Path(__file__).parent.parent
+log_dir = current_dir / "logs"
+log_dir.mkdir(exist_ok=True)
+
+# Настройка логера
+logger = logging.getLogger('masks')
+logger.setLevel(logging.DEBUG)  # Ловит все сообщения от DEBUG и выше
+
+# Хендлер для записи в файл
+log_file = log_dir / "masks.log"
+file_handler = logging.FileHandler(
+    log_file,
+    encoding='utf-8',
+    mode='w'  # 'w' - перезапись
+              # 'a' - дополнение
+)
+file_handler.setLevel(logging.DEBUG)
+
+# Форматтер
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'  # Исправлено на 4-значный год
+)
+file_handler.setFormatter(formatter)
+
+# Добавляем хэндлер к логеру
+logger.addHandler(file_handler)
+
 def get_mask_card_number(card_number: int) -> str:
     """
     Возвращает маскированный номер карты в формате: XXXX XX** **** XXXX.
@@ -38,25 +67,6 @@ def get_mask_account(account_number: int) -> str:
 
     masked_account = f"**{account_str[-4:]}"
     return masked_account
-
-# Создаем папку logs, если её нет
-Path("logs").mkdir(exist_ok=True)
-
-# Настройка логера
-logger = logging.getLogger("masks")
-logger.setLevel(logging.DEBUG)
-
-# Очистка старых handlers (если есть)
-if logger.handlers:
-    logger.handlers.clear()
-
-# FileHandler (перезаписывает файл при каждом запуске)
-file_handler = logging.FileHandler("logs/masks.log", mode="w")
-formatter = logging.Formatter(
-    "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
-)
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
 
 # Пример использования
 def mask_card_number(card_number: str) -> str:
