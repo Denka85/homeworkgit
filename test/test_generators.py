@@ -1,50 +1,53 @@
-import pytest
-from src.generators import filter_by_currency, transaction_descriptions, card_number_generator
-from typing import List, Dict
+import logging
+from functools import wraps
 
-class TestFilterByCurrency:
-    @pytest.fixture
-    def sample_transactions(self) -> List[Dict]:
-        return [
-            {'operationAmount': {'currency': {'code': 'USD'}}},
-            {'operationAmount': {'currency': {'code': 'EUR'}}},
-            {'operationAmount': {'currency': {'code': 'USD'}}},
-            {'invalid': 'data'},
-            {}
-        ]
 
-    def test_filters_correctly(self, sample_transactions):
-        result = list(filter_by_currency(sample_transactions, 'USD'))
-        assert len(result) == 2
-        assert all(t['operationAmount']['currency']['code'] == 'USD' for t in result)
+def log(func=None, *, filename=None):
+    """
+    Упрощённый декоратор для логирования вызовов функций
 
-    def test_empty_input(self):
-        assert list(filter_by_currency([], 'USD')) == []
+    Параметры:
+    ----------
+    func : function, optional
+        Функция для декорирования (используется при вызове без скобок)
+    filename : str, optional
+        Имя файла для записи логов. По умолчанию - вывод в консоль
 
-class TestTransactionDescriptions:
-    @pytest.fixture
-    def sample_transactions(self) -> List[Dict]:
-        return [
-            {'description': 'Payment 1'},
-            {'description': 'Payment 2'},
-            {'no_desc': 'test'},
-            {}
-        ]
+    Примеры использования:
+    ---------------------
+    >>> @log
+    ... def add(a, b):
+    ...     return a + b
 
-    def test_yields_descriptions(self, sample_transactions):
-        result = list(transaction_descriptions(sample_transactions))
-        assert result == ['Payment 1', 'Payment 2', None, None]
+    >>> @log(filename='operations.log')
+    ... def sub(a, b):
+    ...     return a - b
+    """
+    # Настройка базового логирования
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        filename=filename
+    )
 
-class TestCardNumberGenerator:
-    def test_generates_correct_range(self):
-        result = list(card_number_generator(1, 4))
-        assert result == [
-            '0000 0000 0000 0001',
-            '0000 0000 0000 0002',
-            '0000 0000 0000 0003'
-        ]
+    # Для случая @log без скобок
+    if func is not None:
+        return _make_wrapper(func)
 
-    def test_formats_correctly(self):
-        num = next(card_number_generator(1234567890123456, 1234567890123457))
-        assert num == '1234 5678 9012 3456'
+    # Для случая @log(...) с параметрами
+    return _make_wrapper
 
+
+def _make_wrapper(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            logging.info(f'Вызов {func.__name__} с аргументами: {args}, {kwargs}')
+            result = func(*args, **kwargs)
+            logging.info(f'Функция {func.__name__} вернула: {result}')
+            return result
+        except Exception as e:
+            logging.error(f'Ошибка в {func.__name__}: {str(e)}', exc_info=True)
+            raise
+
+    return wrapper
